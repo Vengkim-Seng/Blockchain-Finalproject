@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Lease extends Model
+{
+    use HasFactory;
+
+    protected $primaryKey = 'lease_id';
+
+    protected $fillable = [
+        'landlord_id',
+        'tenant_id',
+        'room_number',
+        'start_date',
+        'end_date',
+        'lease_agreement',
+    ];
+
+    public function landlord()
+    {
+        return $this->belongsTo(Landlord::class, 'landlord_id', 'id');
+    }
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'tenant_id');
+    }
+}
