@@ -195,8 +195,15 @@ $profileImagePath = $landlord->profile_picture ? 'storage/' . $landlord->profile
         <button onclick="cancel('contact_info')" class="cancel-button" style="display:none;">Cancel</button>
     </div>
 </div>
-        </div>
+</div>
 
+<div>
+    <form action="{{ route('landlord.softDelete', ['id'=> $landlord->id]) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this landlord? This action cannot be undone.');">
+        @method ('DELETE')
+        @csrf
+        <button type="submit" class="btn btn-danger">Delete Account</button>
+    </form>
+</div>
         
 <!-- Modal for Uploading Profile Picture -->
 <div id="uploadModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">

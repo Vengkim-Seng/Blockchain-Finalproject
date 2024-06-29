@@ -38,7 +38,7 @@ class TenantController extends Controller
             $tenant->previous_record_id = 0;
             $tenant->previous_hash = 0;
         } else {
-            $lastTenant = Tenant::orderBy('id', 'desc')->first();
+            $lastTenant = Tenant::orderBy('tenant_id', 'desc')->first();
             $tenant->status = "INSERT";
             $tenant->version = 1;
             $tenant->previous_record_id = $lastTenant->id;

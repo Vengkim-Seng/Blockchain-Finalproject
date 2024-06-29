@@ -72,6 +72,9 @@ Route::post('/signup', [LandlordRegistrationController::class, 'register']);
 Route::get('/login-landlord', [LandlordLoginController::class, 'showLoginForm'])->name('login-landlord');
 Route::post('/login-landlord', [LandlordLoginController::class, 'login'])->name('login-landlord.post');
 
+// Landlord softdelete
+Route::delete('/landlords/{id}', [LandlordRegistrationController::class, 'softDeleteLandlord'])->name('landlord.softDelete');
+
 // // Tenant middleware
 // Route::middleware(['tenant.auth'])->group(function () {
 //     Route::get('/tenant/dashboard', [TenantController::class, 'dashboard'])->name('tenant.dashboard');
