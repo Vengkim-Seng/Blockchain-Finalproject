@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Jun 30, 2024 at 02:51 AM
+-- Generation Time: Jun 30, 2024 at 01:17 PM
 -- Server version: 8.0.31
 -- PHP Version: 8.2.0
 
@@ -49,34 +49,29 @@ CREATE TABLE IF NOT EXISTS `failed_jobs` (
 DROP TABLE IF EXISTS `landlords`;
 CREATE TABLE IF NOT EXISTS `landlords` (
   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-  `landlord_id` bigint UNSIGNED NOT NULL,
+  `landlord_id` int NOT NULL,
   `landlord_name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `email` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `contact_info` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `profile_picture` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `contact_info` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `version` int DEFAULT NULL,
-  `previous_record_id` bigint UNSIGNED DEFAULT NULL,
-  `previous_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `current_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `profile_picture` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `status` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `version` int DEFAULT NULL,
+  `previous_record_id` bigint UNSIGNED DEFAULT NULL,
+  `previous_hash` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `current_hash` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `landlord_id_unique` (`landlord_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `landlords`
 --
 
-INSERT INTO `landlords` (`id`, `landlord_id`, `landlord_name`, `email`, `password`, `profile_picture`, `contact_info`, `status`, `version`, `previous_record_id`, `previous_hash`, `current_hash`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(33, 1, 'landlord1', 'landlord1@gmail.com', '$2y$12$5O4.LquByy1PfVy/872PP.rY.SQoAM0tpxjG08hFI.msliI0fDXQ.', 'default-profile-picture.jpg', '1111111111', 'INSERT', 1, 0, '0', 'ce9aa2f06c8575b50cd7adbed8ab782eb7528bda5278544c3b58ec58fe942369', '2024-06-29 12:50:16', '2024-06-29 12:50:16', NULL),
-(34, 1, 'landlord1', 'landlord1@gmail.com', '$2y$12$5O4.LquByy1PfVy/872PP.rY.SQoAM0tpxjG08hFI.msliI0fDXQ.', 'profile_pictures/7NfPqBqw2PiZLPa1GvKYKpzY9TNQkmbLCwvTA4EB.png', '1111111111', 'UPDATE', 2, 33, 'ce9aa2f06c8575b50cd7adbed8ab782eb7528bda5278544c3b58ec58fe942369', '9bd96c45c8cc2946fa4bd0ee5120d92ac6b154b501a7580f40a639b918ef6887', '2024-06-29 12:50:26', '2024-06-29 12:50:26', NULL),
-(35, 1, 'landlord1', 'landlord1@gmail.com', '$2y$12$5O4.LquByy1PfVy/872PP.rY.SQoAM0tpxjG08hFI.msliI0fDXQ.', 'profile_pictures/uawnUnUZCe8aB3r0nLrB8R3iGwbRCTZIAiBolLC4.jpg', '1111111111', 'UPDATE', 3, 34, '9bd96c45c8cc2946fa4bd0ee5120d92ac6b154b501a7580f40a639b918ef6887', 'abf5946c2d09706ecd4fc5659a2bf9053cc91acb0cf2db6e54820ffbeef6ef00', '2024-06-29 12:50:53', '2024-06-29 12:50:53', NULL),
-(36, 1, 'landlord1', 'landlord1@gmail.com', '$2y$12$5O4.LquByy1PfVy/872PP.rY.SQoAM0tpxjG08hFI.msliI0fDXQ.', 'profile_pictures/uawnUnUZCe8aB3r0nLrB8R3iGwbRCTZIAiBolLC4.jpg', '1111111111', 'DELETE', 4, 35, 'abf5946c2d09706ecd4fc5659a2bf9053cc91acb0cf2db6e54820ffbeef6ef00', '3c7fe502a0b33d84cddc3920562c250228ab2adbf1bf87d299baa54ac971695a', '2024-06-29 12:51:53', '2024-06-29 12:51:53', '2024-06-29 12:51:53'),
-(37, 2, 'landlord2', 'landlord2@gmail.com', '$2y$12$Zqh565/Cut.HzFKVnq.jcOJQcfD16fT.9jeO8ZPiy79uLZ85ww4PK', 'default-profile-picture.jpg', '1111111111', 'INSERT', 1, 35, 'abf5946c2d09706ecd4fc5659a2bf9053cc91acb0cf2db6e54820ffbeef6ef00', 'acbf18f1014bc025bf80cb37eb60cf8f0b87707ad096c370d0797b60d53936f7', '2024-06-29 12:52:09', '2024-06-29 12:52:09', NULL);
+INSERT INTO `landlords` (`id`, `landlord_id`, `landlord_name`, `email`, `contact_info`, `password`, `profile_picture`, `created_at`, `updated_at`, `status`, `version`, `previous_record_id`, `previous_hash`, `current_hash`, `deleted_at`) VALUES
+(3, 1, 'landlord1', 'landlord1@gmail.com', '1111111111', '$2y$12$WZz0T36TQgDjgpULKDMkrebW5S6sao9ubrQsnAH/K8FP.hdAoBS4a', 'default-profile-picture.jpg', '2024-06-30 02:51:08', '2024-06-30 02:51:08', 'INSERT', 1, 0, '0', 'd3f3c0a4c1fb103503f1a993659cc437e9caf3d166663e7d7acaf1c9c59dc53e', NULL);
 
 -- --------------------------------------------------------
 
@@ -86,24 +81,33 @@ INSERT INTO `landlords` (`id`, `landlord_id`, `landlord_name`, `email`, `passwor
 
 DROP TABLE IF EXISTS `leases`;
 CREATE TABLE IF NOT EXISTS `leases` (
-  `lease_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
   `landlord_id` bigint UNSIGNED NOT NULL,
-  `tenant_name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tenant_id` bigint UNSIGNED NOT NULL,
   `room_number` int NOT NULL,
-  `start_date` date DEFAULT NULL,
-  `end_date` date DEFAULT NULL,
-  `lease_agreement` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `version` int DEFAULT NULL,
-  `previous_record_id` bigint UNSIGNED DEFAULT NULL,
-  `previous_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `current_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `lease_agreement` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`lease_id`),
+  `status` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `version` int DEFAULT NULL,
+  `previous_record_id` bigint UNSIGNED DEFAULT NULL,
+  `previous_hash` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `current_hash` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
   KEY `leases_landlord_id_foreign` (`landlord_id`),
-  KEY `leases_tenant_name_foreign` (`tenant_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  KEY `leases_tenant_id_foreign` (`tenant_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `leases`
+--
+
+INSERT INTO `leases` (`id`, `landlord_id`, `tenant_id`, `room_number`, `start_date`, `end_date`, `lease_agreement`, `created_at`, `updated_at`, `status`, `version`, `previous_record_id`, `previous_hash`, `current_hash`, `deleted_at`) VALUES
+(37, 1, 3, 3, '2024-06-19', '2024-06-27', 'lease_agreements/gxIllUFKTbft8v8AUESxktGOpKPcVSa53JOmF6Bl.pdf', '2024-06-30 06:11:57', '2024-06-30 06:11:57', 'INSERT', 1, 0, '0', '2cb47e49b9c98e73f48e3792d48e759f44b26fbff60fb35df42a559ab8b7ec8d', NULL),
+(38, 1, 3, 3, '2024-06-19', '2024-06-27', 'lease_agreements/gxIllUFKTbft8v8AUESxktGOpKPcVSa53JOmF6Bl.pdf', '2024-06-30 06:12:08', '2024-06-30 06:12:08', 'DELETE', 2, 37, '2cb47e49b9c98e73f48e3792d48e759f44b26fbff60fb35df42a559ab8b7ec8d', 'dadd4d584aa39b17ac323e1d4cb1a5645459754c6dd384b154ac55386966975a', NULL);
 
 -- --------------------------------------------------------
 
@@ -117,7 +121,7 @@ CREATE TABLE IF NOT EXISTS `migrations` (
   `migration` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `batch` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `migrations`
@@ -130,16 +134,18 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (4, '2019_12_14_000001_create_personal_access_tokens_table', 1),
 (5, '2024_04_28_115456_create_landlords_table', 1),
 (6, '2024_04_28_160354_create_tenants_table', 1),
-(7, '2024_05_20_135439_create_leases_table', 2),
-(8, '2024_05_21_070554_create_rent_payments_table', 2),
-(9, '2024_06_04_123707_create_utility_bills_table', 3),
-(13, '2024_06_13_050018_add_missing_fields_to_leases_table', 4),
-(14, '2024_06_13_050019_add_missing_fields_to_landlords_table', 4),
-(15, '2024_06_13_050019_add_missing_fields_to_tenants_table', 4),
-(16, '2024_06_13_053010_remove_unique_constraint_from_landlord_name20240613', 5),
-(17, '2024_06_13_053557_remove_unique_constraint_from_landlord_email', 6),
-(18, '2024_06_28_150415_add_soft_deletes_to_landlords_table', 7),
-(19, '2024_06_29_155305_add_landlord_id_to_landlords_table', 8);
+(7, '2024_05_20_135439_create_leases_table', 1),
+(8, '2024_05_21_070554_create_rent_payments_table', 1),
+(9, '2024_06_04_123707_create_utility_bills_table', 1),
+(10, '2024_06_13_050018_add_missing_fields_to_leases_table', 1),
+(11, '2024_06_13_050019_add_missing_fields_to_landlords_table', 1),
+(12, '2024_06_13_050019_add_missing_fields_to_tenants_table', 1),
+(13, '2024_06_13_053010_remove_unique_constraint_from_landlord_name20240613', 1),
+(14, '2024_06_13_053557_remove_unique_constraint_from_landlord_email', 1),
+(15, '2024_06_28_150415_add_soft_deletes_to_landlords_table', 1),
+(16, '2024_06_29_155305_add_landlord_id_to_landlords_table', 1),
+(17, '2024_06_30_040635_add_soft_deletes_to_leases_table', 1),
+(18, '2024_06_30_041917_add_soft_deletes_to_tenants_table', 1);
 
 -- --------------------------------------------------------
 
@@ -191,8 +197,8 @@ CREATE TABLE IF NOT EXISTS `rent_payments` (
   `lease_id` bigint UNSIGNED NOT NULL,
   `payment_date` date NOT NULL,
   `amount` decimal(10,2) NOT NULL,
-  `proof_of_payment` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `proof_of_payment` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`rent_payment_id`),
@@ -208,25 +214,34 @@ CREATE TABLE IF NOT EXISTS `rent_payments` (
 
 DROP TABLE IF EXISTS `tenants`;
 CREATE TABLE IF NOT EXISTS `tenants` (
-  `tenant_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+  `tenant_id` int NOT NULL,
   `landlord_id` bigint UNSIGNED NOT NULL,
   `tenant_name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `email` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `profile_picture` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `contact_info` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `version` int DEFAULT NULL,
-  `previous_record_id` bigint UNSIGNED DEFAULT NULL,
-  `previous_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `current_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `profile_picture` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'default-profile-picture.jpg',
+  `contact_info` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `status` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `version` int DEFAULT NULL,
+  `previous_record_id` bigint UNSIGNED DEFAULT NULL,
+  `previous_hash` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `current_hash` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`tenant_id`),
-  UNIQUE KEY `tenant_name_unique` (`tenant_name`),
-  KEY `landlord_id` (`landlord_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  PRIMARY KEY (`id`),
+  KEY `tenants_landlord_id_foreign` (`landlord_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=65 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `tenants`
+--
+
+INSERT INTO `tenants` (`id`, `tenant_id`, `landlord_id`, `tenant_name`, `email`, `password`, `profile_picture`, `contact_info`, `created_at`, `updated_at`, `status`, `version`, `previous_record_id`, `previous_hash`, `current_hash`, `deleted_at`) VALUES
+(64, 3, 1, 'tenant3', 'tenant3@gmail.com', '$2y$12$QnXMyIYwelsco.rNVtKILeXAWMoMy0.Um4FXDprhUrhm1cQH7dMlG', 'default-profile-picture.jpg', '1111111111', '2024-06-30 04:42:32', '2024-06-30 04:42:32', 'INSERT', 1, 0, '0', '93532ab37514645e5fef15b80f22ccaf4cac51a694ede3209557b2af07e30be2', NULL),
+(63, 2, 1, 'tenant2', 'tenant2@gmail.com', '$2y$12$N35KnXojcUXtWwL/Z43M.ehhq/eLXfskWeBC7CU/H2Ep/UcjUOt/q', 'default-profile-picture.jpg', '1111111111', '2024-06-30 04:42:19', '2024-06-30 04:42:19', 'INSERT', 1, 0, '0', '4eeed8a673ceece89ed3369218fb582cd10c7a2b41175025dff615cf884d56c7', NULL),
+(62, 1, 1, 'tenant1', 'tenant1@gmail.com', '$2y$12$u0m8QQAPWMrvFrO4.G10zus2guj4Pjk8wUT2WVEZz10nBW5pksLq6', 'default-profile-picture.jpg', '1111111111', '2024-06-30 04:42:08', '2024-06-30 04:42:08', 'INSERT', 1, 0, '0', '76f194e5991a7f6d9464b355545d38885cdc40f48bdd58d0c30bf9de12cbbd67', NULL);
 
 -- --------------------------------------------------------
 
@@ -262,32 +277,15 @@ CREATE TABLE IF NOT EXISTS `utility_bills` (
   `billing_date` date NOT NULL,
   `utilities` json NOT NULL,
   `total_amount` decimal(10,2) NOT NULL,
-  `proof_of_meter_reading` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `proof_of_utility_payment` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `proof_of_meter_reading` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `proof_of_utility_payment` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`utility_bill_id`),
   KEY `utility_bills_tenant_id_foreign` (`tenant_id`),
   KEY `utility_bills_lease_id_foreign` (`lease_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `leases`
---
-ALTER TABLE `leases`
-  ADD CONSTRAINT `leases_landlord_id_foreign` FOREIGN KEY (`landlord_id`) REFERENCES `landlords` (`landlord_id`),
-  ADD CONSTRAINT `leases_tenant_name_foreign` FOREIGN KEY (`tenant_name`) REFERENCES `tenants` (`tenant_name`);
-
---
--- Constraints for table `tenants`
---
-ALTER TABLE `tenants`
-  ADD CONSTRAINT `tenants_landlord_id_foreign` FOREIGN KEY (`landlord_id`) REFERENCES `landlords` (`landlord_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
