@@ -32,6 +32,8 @@ Route::get('/All-landlords-Table', [LandlordRegistrationController::class, 'inde
 Route::get('/all-tenants-table', [TenantController::class, 'index'])->name('tenants.index');
 // Route::get('/tenants/check', [TenantController::class, 'checkDataValidity'])->name('tenants.check');
 
+Route::get('/all-lease-table', [LeaseController::class, 'index2'])->name('lease.index');
+
 // Tenant Login
 Route::get('/login-tenant', [TenantController::class, 'showLoginForm'])->name('login-tenant');
 Route::post('/login-tenant', [TenantController::class, 'login'])->name('tenant.login.post');

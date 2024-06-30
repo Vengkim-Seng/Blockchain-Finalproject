@@ -20,7 +20,7 @@ class LandlordRegistrationController extends Controller
 
         $request->validate([
             'landlord_name' => 'required|string|max:50',
-            'email' => 'required|string|email|max:50|unique:landlords,email',
+            'email' => 'required|string|email|max:50',
             'password' => 'required|string|min:5|confirmed',
             'contact_info' => 'required|string|max:50',
         ]);
@@ -112,7 +112,6 @@ class LandlordRegistrationController extends Controller
         \Log::info('Current Hash for Soft Deleted Landlord: ' . $newLandlord->current_hash); // Log the hash before saving
 
         $newLandlord->save();
-        $newLandlord->delete();
 
         return redirect()->route('register.landlord')->with('info', 'Due To The Update Information We Kindly Ask You To Login Again');
     }

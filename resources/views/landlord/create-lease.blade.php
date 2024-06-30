@@ -37,15 +37,15 @@
                     @csrf
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label for="tenant_name" class="fw-bold text-dark">Tenant</label>
-                            <select name="tenant_name" id="tenant_name"
-                                class="form-control @error('tenant_name') is-invalid @enderror" required>
+                            <label for="tenant_id" class="fw-bold text-dark">Tenant</label>
+                            <select name="tenant_id" id="tenant_id"
+                                class="form-control @error('tenant_id') is-invalid @enderror" required>
                                 <option value="">Select a tenant</option>
                                 @foreach ($tenants as $tenant)
-                                    <option value="{{ $tenant->tenant_name }}">{{ $tenant->tenant_name }}</option>
+                                    <option value="{{ $tenant->tenant_id }}">{{ $tenant->tenant_name }}</option>
                                 @endforeach
                             </select>
-                            @error('tenant_name')
+                            @error('tenant_id')
                                 <div class="invalid-feedback">
                                     {{ $message }}
                                 </div>

@@ -10,15 +10,21 @@ class Lease extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $primaryKey = 'lease_id';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
         'landlord_id',
+        'tenant_id',
         'tenant_name',
         'room_number',
         'start_date',
         'end_date',
         'lease_agreement',
+        'status',
+        'version',
+        'previous_record_id',
+        'previous_hash',
+        'current_hash'
     ];
 
     public function landlord()
@@ -28,6 +34,6 @@ class Lease extends Model
 
     public function tenant()
     {
-        return $this->belongsTo(Tenant::class, 'tenant_name', 'tenant_name');
+        return $this->belongsTo(Tenant::class);
     }
 }

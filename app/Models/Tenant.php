@@ -5,14 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
 
-class Tenant extends Model
+class Tenant extends Model implements Authenticatable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, AuthenticatableTrait;
 
-    protected $primaryKey = 'tenant_id';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
+        'tenant_id',
         'landlord_id',
         'tenant_name',
         'email',
@@ -28,11 +31,11 @@ class Tenant extends Model
 
     public function landlord()
     {
-        return $this->belongsTo(Landlord::class, 'landlord_id', 'landlord_id');
+        return $this->belongsTo(Landlord::class, 'landlord_id', 'id');
     }
-
     public function leases()
     {
-        return $this->hasMany(Lease::class, 'tenant_name', 'tenant_name');
+        return $this->hasMany(Lease::class);
     }
+
 }

@@ -28,46 +28,60 @@ class TenantController extends Controller
         $request->validate([
             'tenant_name' => 'required|string|max:50',
             'email' => 'required|string|email|max:50',
-            'contact_info' => 'required|string|max:50',
             'password' => 'required|string|min:5',
+            'contact_info' => 'required|string|max:50',
         ]);
 
         $tenant = new Tenant;
 
-        $tenant->landlord_id = Auth::guard('landlord')->user()->landlord_id;
+        if (Tenant::count() == 0) {
+            $tenant->tenant_id = 1;
+            $tenant->status = "INSERT";
+            $tenant->version = 1;
+            $tenant->previous_record_id = 0;
+            $tenant->previous_hash = 0;
+        } else {
+            $lastTenant = Tenant::orderBy('tenant_id', 'desc')->first(); // Order by 'tenant_id' to get the latest record
+            $tenant->tenant_id = $lastTenant->tenant_id + 1;
+            $tenant->status = "INSERT";
+            $tenant->version = 1;
+            $tenant->previous_record_id = 0; // No previous record for new tenant
+            $tenant->previous_hash = 0; // No previous hash for new tenant
+        }
+
+        $tenant->landlord_id = Auth::guard('landlord')->user()->landlord_id; // Ensure landlord_id is set
         $tenant->tenant_name = $request->tenant_name;
         $tenant->email = $request->email;
         $tenant->password = Hash::make($request->password);
         $tenant->contact_info = $request->contact_info;
         $tenant->profile_picture = 'default-profile-picture.jpg';
 
-        if (Tenant::count() == 0) {
-            $tenant->status = "INSERT";
-            $tenant->version = 1;
-            $tenant->previous_record_id = 0;
-            $tenant->previous_hash = 0;
-        } else {
-            $lastTenant = Tenant::where('tenant_name', $request->tenant_name)->orderBy('tenant_id', 'desc')->first();
-            if ($lastTenant) {
-                $tenant->status = "INSERT";
-                $tenant->version = 1;
-                $tenant->previous_record_id = $lastTenant->tenant_id;
-                $tenant->previous_hash = $lastTenant->current_hash;
-            } else {
-                $tenant->status = "INSERT";
-                $tenant->version = 1;
-                $tenant->previous_record_id = 0;
-                $tenant->previous_hash = 0;
-            }
-        }
-
         $tenant->save();
 
-        \Log::info('New Tenant ID: ' . $tenant->tenant_id);
+        \Log::info('New Tenant ID: ' . $tenant->id);
 
-        $tenant->current_hash = hash('sha256', $tenant->tenant_id . $tenant->tenant_name . $tenant->email . $tenant->password . $tenant->contact_info . $tenant->status . $tenant->version . $tenant->previous_record_id . $tenant->previous_hash);
+        $hash_data = [
+            'id' => $tenant->id,
+            'tenant_id' => $tenant->tenant_id,
+            'landlord_id' => $tenant->landlord_id,
+            'tenant_name' => $tenant->tenant_name,
+            'email' => $tenant->email,
+            'password' => $tenant->password,
+            'profile_picture' => $tenant->profile_picture,
+            'contact_info' => $tenant->contact_info,
+            'status' => $tenant->status,
+            'version' => $tenant->version,
+            'previous_record_id' => $tenant->previous_record_id,
+            'previous_hash' => $tenant->previous_hash,
+            'created_at' => $tenant->created_at,
+            'updated_at' => $tenant->updated_at
+        ];
 
-        \Log::info('Current Hash: ' . $tenant->current_hash);
+        \Log::info('Data used for computing hash: ', $hash_data);
+
+        $tenant->current_hash = hash('sha256', implode('', $hash_data));
+
+        \Log::info('Current Hash: ' . $tenant->current_hash); // Log the hash before saving
 
         $tenant->save();
 
@@ -78,17 +92,24 @@ class TenantController extends Controller
     {
         $landlord = Auth::guard('landlord')->user();
         if ($landlord) {
-            $tenants = Tenant::select('tenants.*')
-                ->join(
-                    \DB::raw('(SELECT tenant_name, MAX(version) as latest_version FROM tenants GROUP BY tenant_name) as latest'),
-                    function ($join) {
-                        $join->on('tenants.tenant_name', '=', 'latest.tenant_name')
-                            ->on('tenants.version', '=', 'latest.latest_version');
-                    }
-                )
-                ->where('tenants.landlord_id', $landlord->landlord_id)
-                ->where('tenants.status', '!=', 'DELETE')
-                ->orderBy('tenants.tenant_id', 'desc')
+            // Fetch the latest tenant records based on created_at time
+            $latestRecords = Tenant::select('tenant_name', 'email', \DB::raw('MAX(created_at) as latest_created_at'))
+                ->where('landlord_id', $landlord->landlord_id)
+                ->groupBy('tenant_name', 'email')
+                ->get();
+
+            // Fetch tenant details using the latest created_at time for each tenant
+            $tenants = Tenant::where(function ($query) use ($latestRecords) {
+                foreach ($latestRecords as $record) {
+                    $query->orWhere(function ($subQuery) use ($record) {
+                        $subQuery->where('tenant_name', $record->tenant_name)
+                            ->where('email', $record->email)
+                            ->where('created_at', $record->latest_created_at);
+                    });
+                }
+            })
+                ->where('status', '!=', 'DELETE')
+                ->orderBy('tenant_id', 'desc')
                 ->paginate(10);
 
             return view('landlord.show-tenant', compact('tenants', 'landlord'));
@@ -100,26 +121,46 @@ class TenantController extends Controller
 
     public function softDeleteTenant($tenant_id)
     {
-        $currentTenant = Tenant::where('tenant_id', $tenant_id)->latest('version')->firstOrFail();
+        // Fetch the latest version of the tenant record for the given tenant_id
+        $currentTenant = Tenant::where('tenant_id', $tenant_id)
+            ->where('landlord_id', Auth::guard('landlord')->user()->landlord_id)
+            ->latest('version')
+            ->firstOrFail();
 
         $newTenant = $currentTenant->replicate();
         $newTenant->version = $currentTenant->version + 1;
         $newTenant->status = 'DELETE';
-        $newTenant->previous_record_id = $currentTenant->tenant_id;
+        $newTenant->previous_record_id = $currentTenant->id;
         $newTenant->previous_hash = $currentTenant->current_hash;
 
         $newTenant->save();
 
-        \Log::info('New Soft Deleted Tenant ID: ' . $newTenant->tenant_id);
+        \Log::info('New Soft Deleted Tenant ID: ' . $newTenant->id);
 
-        $newTenant->current_hash = hash('sha256', $newTenant->tenant_id . $newTenant->tenant_name . $newTenant->email . $newTenant->password . $newTenant->contact_info . $newTenant->status . $newTenant->version . $newTenant->previous_record_id . $newTenant->previous_hash);
+        $hash_data = [
+            'id' => $newTenant->id,
+            'tenant_id' => $newTenant->tenant_id,
+            'landlord_id' => $newTenant->landlord_id,
+            'tenant_name' => $newTenant->tenant_name,
+            'email' => $newTenant->email,
+            'password' => $newTenant->password,
+            'profile_picture' => $newTenant->profile_picture,
+            'contact_info' => $newTenant->contact_info,
+            'status' => $newTenant->status,
+            'version' => $newTenant->version,
+            'previous_record_id' => $newTenant->previous_record_id,
+            'previous_hash' => $newTenant->previous_hash,
+            'created_at' => $newTenant->created_at,
+            'updated_at' => $newTenant->updated_at
+        ];
 
-        \Log::info('Current Hash for Soft Deleted Tenant: ' . $newTenant->current_hash);
+        \Log::info('Data used for computing hash: ', $hash_data);
+
+        $newTenant->current_hash = hash('sha256', implode('', $hash_data));
+
+        \Log::info('Current Hash for Soft Deleted Tenant: ' . $newTenant->current_hash); // Log the hash before saving
 
         $newTenant->save();
-
-        \Log::info('Soft Deleted Tenant Status: ' . $newTenant->status);
-        \Log::info('Soft Deleted Tenant Hash after update: ' . $newTenant->current_hash);
 
         return redirect()->route('tenant.show')->with('success', 'Tenant has been successfully deleted.');
     }
@@ -133,18 +174,35 @@ class TenantController extends Controller
     {
         $credentials = $request->only('email', 'password');
 
+        \Log::debug('Tenant login attempt with credentials: ', $credentials);
+
+        // Fetch the latest record for the tenant with the given email
         $latestTenant = Tenant::where('email', $credentials['email'])
             ->orderBy('version', 'desc')
             ->first();
 
-        if ($latestTenant && $latestTenant->status !== 'DELETE' && Hash::check($credentials['password'], $latestTenant->password)) {
+        \Log::debug('Latest tenant record for login attempt: ', [
+            'tenant_id' => $latestTenant->tenant_id ?? null,
+            'status' => $latestTenant->status ?? null,
+            'version' => $latestTenant->version ?? null,
+            'deleted_at' => $latestTenant->deleted_at ?? null,
+        ]);
+
+        // Ensure the latest tenant record has a status other than 'DELETE' and is not soft deleted
+        if ($latestTenant && $latestTenant->status !== 'DELETE' && is_null($latestTenant->deleted_at) && Hash::check($credentials['password'], $latestTenant->password)) {
             Auth::guard('tenants')->login($latestTenant);
+            \Log::info('Tenant login successful: ', ['tenant_id' => $latestTenant->tenant_id]);
             return redirect()->intended('tenant/dashboard');
         } else {
-            Log::debug('Tenant login failed', ['credentials' => $credentials]);
+            \Log::info('Tenant login failed: ', [
+                'credentials' => $credentials,
+                'latestTenant' => $latestTenant ? $latestTenant->toArray() : null,
+            ]);
             return back()->withErrors(['email' => 'Invalid credentials or account deleted'])->withInput();
         }
     }
+
+
 
     public function dashboard()
     {
@@ -153,26 +211,26 @@ class TenantController extends Controller
             return redirect('login-tenant')->with('error', 'Please log in to continue.');
         }
 
-        $currentLease = Lease::where('tenant_name', $tenant->tenant_name)->latest('start_date')->first();
+        $currentLease = Lease::where('tenant_id', $tenant->tenant_id)->latest('start_date')->first();
 
         $upcomingLeaseExpiration = null;
         if ($currentLease && $currentLease->end_date <= Carbon::now()->addMonth()) {
             $upcomingLeaseExpiration = $currentLease;
         }
 
-        $pendingRentPayments = RentPayment::where('tenant_name', $tenant->tenant_name)
+        $pendingRentPayments = RentPayment::where('tenant_id', $tenant->tenant_id)
             ->where('status', 'pending')
             ->whereNull('proof_of_payment')
             ->get();
 
-        $declinedRentPayments = RentPayment::where('tenant_name', $tenant->tenant_name)->where('status', 'declined')->get();
+        $declinedRentPayments = RentPayment::where('tenant_id', $tenant->tenant_id)->where('status', 'declined')->get();
 
-        $pendingUtilityPayments = Utility_bills::where('tenant_name', $tenant->tenant_name)
+        $pendingUtilityPayments = Utility_bills::where('tenant_id', $tenant->tenant_id)
             ->where('status', 'pending')
             ->whereNull('proof_of_utility_payment')
             ->get();
 
-        $declinedUtilityPayments = Utility_bills::where('tenant_name', $tenant->tenant_name)->where('status', 'declined')->get();
+        $declinedUtilityPayments = Utility_bills::where('tenant_id', $tenant->tenant_id)->where('status', 'declined')->get();
 
         return view('tenant.home-dashboard', compact('tenant', 'currentLease', 'pendingRentPayments', 'declinedRentPayments', 'pendingUtilityPayments', 'declinedUtilityPayments', 'upcomingLeaseExpiration'));
     }
@@ -187,7 +245,6 @@ class TenantController extends Controller
         return redirect('/');
     }
 
-    //Need to fix this not yet working
     public function index()
     {
         $valid = true;
@@ -197,8 +254,9 @@ class TenantController extends Controller
 
         foreach ($tenants as $tenant) {
             $hash_data = [
-                'landlord_id' => $tenant->landlord_id,
+                'id' => $tenant->id,
                 'tenant_id' => $tenant->tenant_id,
+                'landlord_id' => $tenant->landlord_id,
                 'tenant_name' => $tenant->tenant_name,
                 'email' => $tenant->email,
                 'password' => $tenant->password,
@@ -207,7 +265,9 @@ class TenantController extends Controller
                 'status' => $tenant->status,
                 'version' => $tenant->version,
                 'previous_record_id' => $tenant->previous_record_id,
-                'previous_hash' => $tenant->previous_hash
+                'previous_hash' => $tenant->previous_hash,
+                'created_at' => $tenant->created_at,
+                'updated_at' => $tenant->updated_at
             ];
 
             $computed_hash = hash('sha256', implode('', $hash_data));
@@ -231,7 +291,7 @@ class TenantController extends Controller
                 continue;
             }
 
-            $linked_records_count = Tenant::where('tenant_id', $tenant->previous_record_id)
+            $linked_records_count = Tenant::where('id', $tenant->previous_record_id)
                 ->where('current_hash', $tenant->previous_hash)
                 ->count();
 

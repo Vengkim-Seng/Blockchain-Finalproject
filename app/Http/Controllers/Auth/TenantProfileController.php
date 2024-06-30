@@ -32,10 +32,10 @@ class TenantProfileController extends Controller
             $filename = $request->profile_picture->store('tenant_profile_pictures', 'public');
             $tenant = Auth::guard('tenants')->user();
 
-            // Insert a new record with the updated profile picture
             $newTenant = $this->createNewTenantRecord($tenant, ['profile_picture' => $filename]);
 
-            return redirect()->back()->with('success', 'Profile picture updated successfully!');
+            Auth::guard('tenants')->logout();
+            return redirect()->route('login-tenant')->with('update_info', 'Due To The Update Information We Kindly Ask You To Login Again');
         }
 
         return redirect()->back()->with('error', 'There was an error uploading the image.');
@@ -43,17 +43,17 @@ class TenantProfileController extends Controller
 
     public function updateField(Request $request)
     {
-        \Log::info('Updating field: ' . $request->field . ' with value: ' . $request->value); // Laravel logging
+        \Log::info('Updating field: ' . $request->field . ' with value: ' . $request->value);
 
         $tenant = Auth::guard('tenants')->user();
         $field = $request->field;
         $value = $request->value;
 
         if (isset($tenant->{$field})) {
-            // Insert a new record with the updated field value
             $newTenant = $this->createNewTenantRecord($tenant, [$field => $value]);
 
-            return response()->json(['success' => true, 'message' => 'Profile updated successfully!']);
+            Auth::guard('tenants')->logout();
+            return response()->json(['success' => true, 'message' => 'Due To The Update Information We Kindly Ask You To Login Again', 'update_info' => true]);
         }
 
         return response()->json(['success' => false, 'message' => 'Invalid field specified.']);
@@ -84,23 +84,23 @@ class TenantProfileController extends Controller
             return redirect()->back()->withErrors(['old_password' => 'The old password is incorrect'])->withInput();
         }
 
-        // Insert a new record with the updated password
         $newTenant = $this->createNewTenantRecord($tenant, ['password' => Hash::make($request->input('new_password'))]);
 
         session()->flash('success', 'Password changed successfully.');
 
-        return redirect()->route('tenant.profile');
+        Auth::guard('tenants')->logout();
+        return redirect()->route('login-tenant')->with('update_info', 'Due To The Update Information We Kindly Ask You To Login Again');
     }
 
     private function createNewTenantRecord($tenant, $updates)
     {
-        // Get the latest version of the tenant record
-        $lastTenant = Tenant::where('tenant_name', $tenant->tenant_name)
+        $lastTenant = Tenant::where('tenant_id', $tenant->tenant_id)
             ->orderBy('version', 'desc')
             ->first();
 
         $newTenant = new Tenant;
-        $newTenant->landlord_id = $lastTenant->landlord_id;
+        $newTenant->tenant_id = $lastTenant->tenant_id; // Ensure tenant_id remains the same
+        $newTenant->landlord_id = $lastTenant->landlord_id; // Ensure landlord_id is set
         $newTenant->tenant_name = $lastTenant->tenant_name;
         $newTenant->email = $lastTenant->email;
         $newTenant->password = $lastTenant->password;
@@ -108,20 +108,39 @@ class TenantProfileController extends Controller
         $newTenant->profile_picture = $lastTenant->profile_picture;
         $newTenant->status = "UPDATE";
         $newTenant->version = $lastTenant->version + 1;
-        $newTenant->previous_record_id = $lastTenant->tenant_id;
+        $newTenant->previous_record_id = $lastTenant->id;
         $newTenant->previous_hash = $lastTenant->current_hash;
 
         foreach ($updates as $key => $value) {
             $newTenant->{$key} = $value;
         }
 
-        // Save first to generate the id
         $newTenant->save();
 
-        // Generate the current hash after saving to get the id
-        $newTenant->current_hash = hash('sha256', $newTenant->id . $newTenant->tenant_name . $newTenant->email . $newTenant->password . $newTenant->contact_info . $newTenant->profile_picture . $newTenant->status . $newTenant->version . $newTenant->previous_record_id . $newTenant->previous_hash);
+        // Now that the newTenant has been saved, it will have an id
+        $hash_data = [
+            'id' => $newTenant->id,
+            'tenant_id' => $newTenant->tenant_id,
+            'landlord_id' => $newTenant->landlord_id,
+            'tenant_name' => $newTenant->tenant_name,
+            'email' => $newTenant->email,
+            'password' => $newTenant->password,
+            'profile_picture' => $newTenant->profile_picture,
+            'contact_info' => $newTenant->contact_info,
+            'status' => $newTenant->status,
+            'version' => $newTenant->version,
+            'previous_record_id' => $newTenant->previous_record_id,
+            'previous_hash' => $newTenant->previous_hash,
+            'created_at' => $newTenant->created_at,
+            'updated_at' => $newTenant->updated_at
+        ];
 
-        // Save again to update the current_hash
+        \Log::info('Data used for computing hash: ', $hash_data);
+
+        $newTenant->current_hash = hash('sha256', implode('', $hash_data));
+
+        \Log::info('Current Hash in Profile Update: ' . $newTenant->current_hash); // Log the hash before saving
+
         $newTenant->save();
 
         return $newTenant;
