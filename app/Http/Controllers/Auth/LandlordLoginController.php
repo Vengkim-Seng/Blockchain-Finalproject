@@ -11,7 +11,7 @@ use App\Models\Tenant;
 use App\Models\RentPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash; // Correct import for Hash facade
+use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 
 class LandlordLoginController extends Controller
@@ -100,4 +100,3 @@ class LandlordLoginController extends Controller
         return redirect('/'); // Redirect to the homepage or login page
     }
 }
-

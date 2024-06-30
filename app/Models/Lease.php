@@ -13,7 +13,7 @@ class Lease extends Model
 
     protected $fillable = [
         'landlord_id',
-        'tenant_id',
+        'tenant_name',
         'room_number',
         'start_date',
         'end_date',
@@ -22,11 +22,11 @@ class Lease extends Model
 
     public function landlord()
     {
-        return $this->belongsTo(Landlord::class, 'landlord_id', 'id');
+        return $this->belongsTo(Landlord::class, 'landlord_id', 'landlord_id');
     }
 
     public function tenant()
     {
-        return $this->belongsTo(Tenant::class, 'tenant_id', 'tenant_id');
+        return $this->belongsTo(Tenant::class, 'tenant_name', 'tenant_name');
     }
 }
