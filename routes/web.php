@@ -27,8 +27,10 @@ Route::get('/', function () {
 })->name('homepage');
 
 Route::get('/All-landlords-Table', [LandlordRegistrationController::class, 'index'])->name('landlords.index');
-Route::get('/landlords/check', [LandlordRegistrationController::class, 'checkDataValidity'])->name('landlords.check');
+// Route::get('/landlords/check', [LandlordRegistrationController::class, 'checkDataValidity'])->name('landlords.check');
 
+Route::get('/all-tenants-table', [TenantController::class, 'index'])->name('tenants.index');
+// Route::get('/tenants/check', [TenantController::class, 'checkDataValidity'])->name('tenants.check');
 
 // Tenant Login
 Route::get('/login-tenant', [TenantController::class, 'showLoginForm'])->name('login-tenant');

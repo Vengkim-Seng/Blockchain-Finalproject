@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tenants', function (Blueprint $table) {
-            $table->id('tenant_id');
+            $table->id();
+            //add id for previous record
+            $table->integer('tenant_id');
             $table->foreignId('landlord_id')->constrained('landlords');
             $table->string('tenant_name')->unique();
             $table->string('email')->unique();

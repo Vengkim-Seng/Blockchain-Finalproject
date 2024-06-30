@@ -10,7 +10,7 @@
         <ul class="flex space-x-12 items-center">
             <li><a href="/All-landlords-Table" class="hover:text-gray-300">Landlord</a></li>
             <li><a href="/all-tenants-table" class="hover:text-gray-300">Tenant</a></li>
-            <li><a href="#" class="hover:text-gray-300">Lease</a></li>
+            <li><a href="#" class="hover:text-gray-300">lease</a></li>
         </ul>
     </nav>
     <!-- Landlords Table Container -->
@@ -44,7 +44,7 @@
                         <thead class="bg-blue-500 text-white text-center">
                             <tr>
                                 <th class="py-2 px-4 border-b">ID</th>
-                                <th class="py-2 px-4 border-b">Landlord Name</th>
+                                <th class="py-2 px-4 border-b">Tenants Name</th>
                                 <th class="py-2 px-4 border-b">Status</th>
                                 <th class="py-2 px-4 border-b">Version</th>
                                 <th class="py-2 px-4 border-b">Previous Record ID</th>
@@ -53,33 +53,33 @@
                             </tr>
                         </thead>
                         <tbody class="text-center">
-                            @foreach ($landlords as $landlord)
-                                @php
-                                    $hashColor = '#' . substr(md5($landlord->previous_hash), 0, 6);
-                                    $currentHashColor = '#' . substr(md5($landlord->current_hash), 0, 6);
-                                @endphp
-                                <tr class="hover:bg-gray-100">
-                                    <td class="py-2 px-4 border-b text-sm">{{ $landlord->id }}</td>
-                                    <td class="py-2 px-4 border-b text-sm">{{ $landlord->landlord_name }}</td>
-                                    <td class="py-2 px-4 border-b text-sm">
-                                        <span class="px-2 py-1 rounded-full text-white 
-                                                        @if($landlord->status == 'INSERT') bg-green-500 
-                                                        @elseif($landlord->status == 'UPDATE') bg-blue-500 
-                                                        @elseif($landlord->status == 'DELETE') bg-red-500 
-                                                        @endif">
-                                            {{ $landlord->status }}
-                                        </span>
-                                    </td>
-                                    <td class="py-2 px-4 border-b text-sm">{{ $landlord->version }}</td>
-                                    <td class="py-2 px-4 border-b text-sm">{{ $landlord->previous_record_id }}</td>
-                                    <td class="py-2 px-4 border-b text-sm" style="background-color: {{ $hashColor }}">
-                                        {{ $landlord->previous_hash }}
-                                    </td>
-                                    <td class="py-2 px-4 border-b text-sm"
-                                        style="background-color: {{ $currentHashColor }}">
-                                        {{ $landlord->current_hash }}
-                                    </td>
-                                </tr>
+                            @foreach ($tenants as $tenant)
+                              @php
+                                  $hashColor = '#' . substr(md5($tenant->previous_hash), 0, 6);
+                                  $currentHashColor = '#' . substr(md5($tenant->current_hash), 0, 6);
+                              @endphp
+                              <tr class="hover:bg-gray-100">
+                                  <td class="py-2 px-4 border-b text-sm">{{ $tenant->tenant_id }}</td>
+                                  <td class="py-2 px-4 border-b text-sm">{{ $tenant->tenant_name }}</td>
+                                  <td class="py-2 px-4 border-b text-sm">
+                                      <span class="px-2 py-1 rounded-full text-white 
+                                                      @if($tenant->status == 'INSERT') bg-green-500 
+                                                      @elseif($tenant->status == 'UPDATE') bg-blue-500 
+                                                      @elseif($tenant->status == 'DELETE') bg-red-500 
+                                                      @endif">
+                                          {{ $tenant->status }}
+                                      </span>
+                                  </td>
+                                  <td class="py-2 px-4 border-b text-sm">{{ $tenant->version }}</td>
+                                  <td class="py-2 px-4 border-b text-sm">{{ $tenant->previous_record_id }}</td>
+                                  <td class="py-2 px-4 border-b text-sm" style="background-color: {{ $hashColor }}">
+                                      {{ $tenant->previous_hash }}
+                                  </td>
+                                  <td class="py-2 px-4 border-b text-sm"
+                                      style="background-color: {{ $currentHashColor }}">
+                                      {{ $tenant->current_hash }}
+                                  </td>
+                              </tr>
                             @endforeach
                         </tbody>
                     </table>

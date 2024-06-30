@@ -186,4 +186,67 @@ class TenantController extends Controller
 
         return redirect('/');
     }
+
+    //Need to fix this not yet working
+    public function index()
+    {
+        $valid = true;
+
+        // Fetch all tenants including soft-deleted ones
+        $tenants = Tenant::withTrashed()->orderBy('tenant_id', 'asc')->get();
+
+        foreach ($tenants as $tenant) {
+            $hash_data = [
+                'landlord_id' => $tenant->landlord_id,
+                'tenant_id' => $tenant->tenant_id,
+                'tenant_name' => $tenant->tenant_name,
+                'email' => $tenant->email,
+                'password' => $tenant->password,
+                'profile_picture' => $tenant->profile_picture,
+                'contact_info' => $tenant->contact_info,
+                'status' => $tenant->status,
+                'version' => $tenant->version,
+                'previous_record_id' => $tenant->previous_record_id,
+                'previous_hash' => $tenant->previous_hash
+            ];
+
+            $computed_hash = hash('sha256', implode('', $hash_data));
+
+            // Detailed logging for hash computation
+            \Log::info('Hash calculation details for tenant ', $hash_data);
+            \Log::info('Computed Hash: ' . $computed_hash);
+
+            if ($computed_hash !== $tenant->current_hash) {
+                \Log::error('Hash mismatch', [
+                    'tenant_id' => $tenant->tenant_id,
+                    'computed_hash' => $computed_hash,
+                    'current_hash' => $tenant->current_hash,
+                ]);
+                $valid = false;
+                break;
+            }
+
+            // Skip the linked records check for the initial record
+            if ($tenant->previous_record_id == 0 && $tenant->previous_hash == '0') {
+                continue;
+            }
+
+            $linked_records_count = Tenant::where('tenant_id', $tenant->previous_record_id)
+                ->where('current_hash', $tenant->previous_hash)
+                ->count();
+
+            if ($linked_records_count === 0) {
+                \Log::error('Invalid linked records count', [
+                    'tenant_id' => $tenant->tenant_id,
+                    'previous_record_id' => $tenant->previous_record_id,
+                    'previous_hash' => $tenant->previous_hash,
+                    'linked_records_count' => $linked_records_count,
+                ]);
+                $valid = false;
+                break;
+            }
+        }
+
+        return view('all-tenants-table', compact('tenants', 'valid'));
+    }
 }

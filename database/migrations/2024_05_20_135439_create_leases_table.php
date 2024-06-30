@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('leases', function (Blueprint $table) {
-            $table->id('lease_id');
+            $table->id();
+            //add id for previous record
+            $table->integer('lease_id');
             $table->unsignedBigInteger('landlord_id');
             $table->unsignedBigInteger('tenant_id');
             $table->integer('room_number');
