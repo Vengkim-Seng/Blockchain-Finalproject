@@ -13,40 +13,29 @@ class ProfileController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:landlord'); // Ensure the correct guard is used for this controller
+        $this->middleware('auth:landlord');
     }
 
-    /**
-     * Show the form for editing the logged-in landlord's profile.
-     *
-     * @return \Illuminate\View\View
-     */
     public function show()
     {
-        $landlord = Auth::guard('landlord')->user(); // Fetch the currently authenticated landlord
+        $landlord = Auth::guard('landlord')->user();
         return view('landlord.profile', compact('landlord'));
     }
 
-    /**
-     * Handle the uploading of the profile picture.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function upload(Request $request)
     {
         $request->validate([
-            'profile_picture' => 'required|image', // 2MB Max
+            'profile_picture' => 'required|image',
         ]);
 
         if ($request->hasFile('profile_picture')) {
             $filename = $request->profile_picture->store('profile_pictures', 'public');
-            $landlord = Auth::guard('landlord')->user(); // Ensure to use the same guard
+            $landlord = Auth::guard('landlord')->user();
 
-            // Insert a new record with updated profile picture
             $newLandlord = $this->createNewLandlordRecord($landlord, ['profile_picture' => $filename]);
 
-            return redirect()->back()->with('success', 'Profile picture updated successfully!');
+            Auth::guard('landlord')->logout();
+            return redirect()->route('login-landlord')->with('update_info', 'Due To The Update Information We Kindly Ask You To Login Again');
         }
 
         return redirect()->back()->with('error', 'There was an error uploading the image.');
@@ -54,27 +43,25 @@ class ProfileController extends Controller
 
     public function updateField(Request $request)
     {
-        \Log::info('Updating field: ' . $request->field . ' with value: ' . $request->value); // Laravel logging
+        \Log::info('Updating field: ' . $request->field . ' with value: ' . $request->value);
 
         $landlord = Auth::guard('landlord')->user();
         $field = $request->field;
         $value = $request->value;
 
         if (isset($landlord->{$field})) {
-            // Insert a new record with the updated field value
             $newLandlord = $this->createNewLandlordRecord($landlord, [$field => $value]);
 
-            return response()->json(['success' => true, 'message' => 'Profile updated successfully!']);
+            Auth::guard('landlord')->logout();
+            return response()->json(['success' => true, 'message' => 'Due To The Update Information We Kindly Ask You To Login Again', 'update_info' => true]);
         }
 
         return response()->json(['success' => false, 'message' => 'Invalid field specified.']);
     }
 
-    // Change Password
     public function showChangePasswordForm()
     {
         $landlord = Auth::guard('landlord')->user();
-        // Return the view for changing password
         return view('landlord.change-password', compact('landlord'));
     }
 
@@ -82,41 +69,37 @@ class ProfileController extends Controller
     {
         $landlord = Auth::guard('landlord')->user();
 
-        // Define validation rules
         $rules = [
             'old_password' => 'required',
-            'new_password' => 'required|min:5|confirmed', // Password confirmation must match
+            'new_password' => 'required|min:5|confirmed',
         ];
 
-        // Validate the request
         $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
-            // If validation fails, return with errors
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Check if the old password matches the current one
         if (!Hash::check($request->input('old_password'), $landlord->password)) {
             return redirect()->back()->withErrors(['old_password' => 'The old password is incorrect'])->withInput();
         }
 
-        // Insert a new record with the updated password
         $newLandlord = $this->createNewLandlordRecord($landlord, ['password' => Hash::make($request->input('new_password'))]);
 
         session()->flash('success', 'Password changed successfully.');
 
-        return redirect()->route('profile.show'); // Redirect to a safe location after changing password
+        Auth::guard('landlord')->logout();
+        return redirect()->route('login-landlord')->with('update_info', 'Due To The Update Information We Kindly Ask You To Login Again');
     }
 
     private function createNewLandlordRecord($landlord, $updates)
     {
-        // Get the latest version of the landlord record
-        $lastLandlord = Landlord::where('landlord_name', $landlord->landlord_name)
+        $lastLandlord = Landlord::where('landlord_id', $landlord->landlord_id)
             ->orderBy('version', 'desc')
             ->first();
 
         $newLandlord = new Landlord;
+        $newLandlord->landlord_id = $lastLandlord->landlord_id; // Ensure landlord_id remains the same
         $newLandlord->landlord_name = $lastLandlord->landlord_name;
         $newLandlord->email = $lastLandlord->email;
         $newLandlord->password = $lastLandlord->password;
@@ -131,11 +114,32 @@ class ProfileController extends Controller
             $newLandlord->{$key} = $value;
         }
 
-        // Generate the current hash
-        $newLandlord->current_hash = hash('sha256', $newLandlord->id . $newLandlord->landlord_name . $newLandlord->email . $newLandlord->password . $newLandlord->contact_info . $newLandlord->profile_picture . $newLandlord->status . $newLandlord->version . $newLandlord->previous_record_id . $newLandlord->previous_hash);
+        $newLandlord->save();
+
+        // Now that the newLandlord has been saved, it will have an id
+        $hash_data = [
+            'id' => $newLandlord->id,
+            'landlord_id' => $newLandlord->landlord_id,
+            'landlord_name' => $newLandlord->landlord_name,
+            'email' => $newLandlord->email,
+            'password' => $newLandlord->password,
+            'profile_picture' => $newLandlord->profile_picture,
+            'contact_info' => $newLandlord->contact_info,
+            'status' => $newLandlord->status,
+            'version' => $newLandlord->version,
+            'previous_record_id' => $newLandlord->previous_record_id,
+            'previous_hash' => $newLandlord->previous_hash
+        ];
+
+        \Log::info('Data used for computing hash: ', $hash_data);
+
+        $newLandlord->current_hash = hash('sha256', implode('', $hash_data));
+
+        \Log::info('Current Hash in Profile Update: ' . $newLandlord->current_hash); // Log the hash before saving
 
         $newLandlord->save();
 
         return $newLandlord;
     }
 }
+?>

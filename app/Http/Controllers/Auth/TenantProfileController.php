@@ -31,7 +31,6 @@ class TenantProfileController extends Controller
         if ($request->hasFile('profile_picture')) {
             $filename = $request->profile_picture->store('tenant_profile_pictures', 'public');
             $tenant = Auth::guard('tenants')->user();
-            $tenant->profile_picture = $filename;
 
             // Insert a new record with the updated profile picture
             $newTenant = $this->createNewTenantRecord($tenant, ['profile_picture' => $filename]);
@@ -44,12 +43,16 @@ class TenantProfileController extends Controller
 
     public function updateField(Request $request)
     {
+        \Log::info('Updating field: ' . $request->field . ' with value: ' . $request->value); // Laravel logging
+
         $tenant = Auth::guard('tenants')->user();
         $field = $request->field;
         $value = $request->value;
 
-        if (in_array($field, ['tenant_name', 'email', 'contact_info'])) {
+        if (isset($tenant->{$field})) {
+            // Insert a new record with the updated field value
             $newTenant = $this->createNewTenantRecord($tenant, [$field => $value]);
+
             return response()->json(['success' => true, 'message' => 'Profile updated successfully!']);
         }
 
@@ -81,6 +84,7 @@ class TenantProfileController extends Controller
             return redirect()->back()->withErrors(['old_password' => 'The old password is incorrect'])->withInput();
         }
 
+        // Insert a new record with the updated password
         $newTenant = $this->createNewTenantRecord($tenant, ['password' => Hash::make($request->input('new_password'))]);
 
         session()->flash('success', 'Password changed successfully.');
@@ -90,6 +94,7 @@ class TenantProfileController extends Controller
 
     private function createNewTenantRecord($tenant, $updates)
     {
+        // Get the latest version of the tenant record
         $lastTenant = Tenant::where('tenant_name', $tenant->tenant_name)
             ->orderBy('version', 'desc')
             ->first();
@@ -103,15 +108,20 @@ class TenantProfileController extends Controller
         $newTenant->profile_picture = $lastTenant->profile_picture;
         $newTenant->status = "UPDATE";
         $newTenant->version = $lastTenant->version + 1;
-        $newTenant->previous_record_id = $lastTenant->id;
+        $newTenant->previous_record_id = $lastTenant->tenant_id;
         $newTenant->previous_hash = $lastTenant->current_hash;
 
         foreach ($updates as $key => $value) {
             $newTenant->{$key} = $value;
         }
 
+        // Save first to generate the id
+        $newTenant->save();
+
+        // Generate the current hash after saving to get the id
         $newTenant->current_hash = hash('sha256', $newTenant->id . $newTenant->tenant_name . $newTenant->email . $newTenant->password . $newTenant->contact_info . $newTenant->profile_picture . $newTenant->status . $newTenant->version . $newTenant->previous_record_id . $newTenant->previous_hash);
 
+        // Save again to update the current_hash
         $newTenant->save();
 
         return $newTenant;
