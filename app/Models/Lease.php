@@ -10,7 +10,7 @@ class Lease extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'lease_id';
 
     protected $fillable = [
         'landlord_id',
@@ -32,8 +32,10 @@ class Lease extends Model
         return $this->belongsTo(Landlord::class, 'landlord_id', 'landlord_id');
     }
 
+    // In Lease.php model
     public function tenant()
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'tenant_id');
     }
+
 }

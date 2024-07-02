@@ -44,8 +44,8 @@
                         <thead class="bg-blue-500 text-white text-center">
                             <tr>
                                 <th class="py-2 px-4 border-b">ID</th>
-                                <th class="py-2 px-4 border-b">Landlord id</th>
-                                <th class="py-2 px-4 border-b">Tenant id</th>
+                                <th class="py-2 px-4 border-b">Landlord Name</th>
+                                <th class="py-2 px-4 border-b">Tenant Name</th>
                                 <th class="py-2 px-4 border-b">Room Number</th>
                                 <th class="py-2 px-4 border-b">Status</th>
                                 <th class="py-2 px-4 border-b">Version</th>
@@ -61,16 +61,17 @@
                                                             $currentHashColor = '#' . substr(md5($lease->current_hash), 0, 6);
                                                         @endphp
                                                         <tr class="hover:bg-gray-100">
-                                                            <td class="py-2 px-4 border-b text-sm">{{ $lease->id }}</td>
-                                                            <td class="py-2 px-4 border-b text-sm">{{ $lease->landlord_id }}</td>
-                                                            <td class="py-2 px-4 border-b text-sm">{{ $lease->tenant_id }}</td>
+                                                            <td class="py-2 px-4 border-b text-sm">{{ $lease->lease_id }}</td>
+                                                            <td class="py-2 px-4 border-b text-sm">{{ $lease->landlord->landlord_name ?? 'N/A' }}
+                                                            </td>
+                                                            <td class="py-2 px-4 border-b text-sm">{{ $lease->tenant->tenant_name ?? 'N/A' }}</td>
                                                             <td class="py-2 px-4 border-b text-sm">{{ $lease->room_number }}</td>
                                                             <td class="py-2 px-4 border-b text-sm">
                                                                 <span class="px-2 py-1 rounded-full text-white 
-                                                                                                    @if($lease->status == 'INSERT') bg-green-500 
-                                                                                                    @elseif($lease->status == 'UPDATE') bg-blue-500 
-                                                                                                    @elseif($lease->status == 'DELETE') bg-red-500 
-                                                                                                    @endif">
+                                                                        @if($lease->status == 'INSERT') bg-green-500 
+                                                                        @elseif($lease->status == 'UPDATE') bg-blue-500 
+                                                                        @elseif($lease->status == 'DELETE') bg-red-500 
+                                                                        @endif">
                                                                     {{ $lease->status }}
                                                                 </span>
                                                             </td>

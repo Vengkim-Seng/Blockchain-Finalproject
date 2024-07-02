@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Jun 30, 2024 at 01:17 PM
+-- Generation Time: Jul 02, 2024 at 05:08 AM
 -- Server version: 8.0.31
 -- PHP Version: 8.2.0
 
@@ -81,7 +81,7 @@ INSERT INTO `landlords` (`id`, `landlord_id`, `landlord_name`, `email`, `contact
 
 DROP TABLE IF EXISTS `leases`;
 CREATE TABLE IF NOT EXISTS `leases` (
-  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+  `lease_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
   `landlord_id` bigint UNSIGNED NOT NULL,
   `tenant_id` bigint UNSIGNED NOT NULL,
   `room_number` int NOT NULL,
@@ -96,18 +96,18 @@ CREATE TABLE IF NOT EXISTS `leases` (
   `previous_hash` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `current_hash` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
+  PRIMARY KEY (`lease_id`),
   KEY `leases_landlord_id_foreign` (`landlord_id`),
   KEY `leases_tenant_id_foreign` (`tenant_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=62 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `leases`
 --
 
-INSERT INTO `leases` (`id`, `landlord_id`, `tenant_id`, `room_number`, `start_date`, `end_date`, `lease_agreement`, `created_at`, `updated_at`, `status`, `version`, `previous_record_id`, `previous_hash`, `current_hash`, `deleted_at`) VALUES
-(37, 1, 3, 3, '2024-06-19', '2024-06-27', 'lease_agreements/gxIllUFKTbft8v8AUESxktGOpKPcVSa53JOmF6Bl.pdf', '2024-06-30 06:11:57', '2024-06-30 06:11:57', 'INSERT', 1, 0, '0', '2cb47e49b9c98e73f48e3792d48e759f44b26fbff60fb35df42a559ab8b7ec8d', NULL),
-(38, 1, 3, 3, '2024-06-19', '2024-06-27', 'lease_agreements/gxIllUFKTbft8v8AUESxktGOpKPcVSa53JOmF6Bl.pdf', '2024-06-30 06:12:08', '2024-06-30 06:12:08', 'DELETE', 2, 37, '2cb47e49b9c98e73f48e3792d48e759f44b26fbff60fb35df42a559ab8b7ec8d', 'dadd4d584aa39b17ac323e1d4cb1a5645459754c6dd384b154ac55386966975a', NULL);
+INSERT INTO `leases` (`lease_id`, `landlord_id`, `tenant_id`, `room_number`, `start_date`, `end_date`, `lease_agreement`, `created_at`, `updated_at`, `status`, `version`, `previous_record_id`, `previous_hash`, `current_hash`, `deleted_at`) VALUES
+(59, 1, 2, 2, '2024-07-17', '2024-07-28', 'lease_agreements/MLRoqkquH2KgDcAoDZ1zUNTCsFYN0EVQEEe2sffW.pdf', '2024-07-01 21:51:19', '2024-07-01 21:51:19', 'INSERT', 1, 0, '0', 'd7cac8d6f73f2bc415cc1f79690cf2e064a1a98b7d4ca26e930094122b95a205', NULL),
+(60, 1, 2, 2, '2024-07-10', '2024-07-28', 'lease_agreements/MLRoqkquH2KgDcAoDZ1zUNTCsFYN0EVQEEe2sffW.pdf', '2024-07-01 21:51:31', '2024-07-01 21:51:31', 'UPDATE', 2, 59, 'd7cac8d6f73f2bc415cc1f79690cf2e064a1a98b7d4ca26e930094122b95a205', '2bc2efc14bd36247ce0d2ed0ed6308d7bd92ad5208dbd6fd9b54a9a944ea8973', NULL);
 
 -- --------------------------------------------------------
 
@@ -232,7 +232,7 @@ CREATE TABLE IF NOT EXISTS `tenants` (
   `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `tenants_landlord_id_foreign` (`landlord_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=65 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=66 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `tenants`
@@ -240,6 +240,7 @@ CREATE TABLE IF NOT EXISTS `tenants` (
 
 INSERT INTO `tenants` (`id`, `tenant_id`, `landlord_id`, `tenant_name`, `email`, `password`, `profile_picture`, `contact_info`, `created_at`, `updated_at`, `status`, `version`, `previous_record_id`, `previous_hash`, `current_hash`, `deleted_at`) VALUES
 (64, 3, 1, 'tenant3', 'tenant3@gmail.com', '$2y$12$QnXMyIYwelsco.rNVtKILeXAWMoMy0.Um4FXDprhUrhm1cQH7dMlG', 'default-profile-picture.jpg', '1111111111', '2024-06-30 04:42:32', '2024-06-30 04:42:32', 'INSERT', 1, 0, '0', '93532ab37514645e5fef15b80f22ccaf4cac51a694ede3209557b2af07e30be2', NULL),
+(65, 2, 1, 'tenant2', 'tenant2@gmail.com', '$2y$12$CUId3FJ3DBn/lyWp0FX3tuW3HCDVuWfErvM6nTu.iUaBW3KVK6zgi', 'default-profile-picture.jpg', '1111111111', '2024-07-01 21:59:40', '2024-07-01 21:59:40', 'UPDATE', 2, 63, '4eeed8a673ceece89ed3369218fb582cd10c7a2b41175025dff615cf884d56c7', '15d34a25c04a9933bdcb4ae7f2177ba8c52b5680aa1d358792b857eacceecadb', NULL),
 (63, 2, 1, 'tenant2', 'tenant2@gmail.com', '$2y$12$N35KnXojcUXtWwL/Z43M.ehhq/eLXfskWeBC7CU/H2Ep/UcjUOt/q', 'default-profile-picture.jpg', '1111111111', '2024-06-30 04:42:19', '2024-06-30 04:42:19', 'INSERT', 1, 0, '0', '4eeed8a673ceece89ed3369218fb582cd10c7a2b41175025dff615cf884d56c7', NULL),
 (62, 1, 1, 'tenant1', 'tenant1@gmail.com', '$2y$12$u0m8QQAPWMrvFrO4.G10zus2guj4Pjk8wUT2WVEZz10nBW5pksLq6', 'default-profile-picture.jpg', '1111111111', '2024-06-30 04:42:08', '2024-06-30 04:42:08', 'INSERT', 1, 0, '0', '76f194e5991a7f6d9464b355545d38885cdc40f48bdd58d0c30bf9de12cbbd67', NULL);
 

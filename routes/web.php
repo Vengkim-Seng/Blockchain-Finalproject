@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\TenantController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Landlord\RentController;
@@ -11,26 +10,13 @@ use App\Http\Controllers\Auth\TenantProfileController;
 use App\Http\Controllers\Auth\LandlordRegistrationController;
 use App\Http\Controllers\Landlord\UtilityBillController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
 Route::get('/', function () {
     return view('homepage');
 })->name('homepage');
 
 Route::get('/All-landlords-Table', [LandlordRegistrationController::class, 'index'])->name('landlords.index');
-// Route::get('/landlords/check', [LandlordRegistrationController::class, 'checkDataValidity'])->name('landlords.check');
 
 Route::get('/all-tenants-table', [TenantController::class, 'index'])->name('tenants.index');
-// Route::get('/tenants/check', [TenantController::class, 'checkDataValidity'])->name('tenants.check');
 
 Route::get('/all-lease-table', [LeaseController::class, 'index2'])->name('lease.index');
 

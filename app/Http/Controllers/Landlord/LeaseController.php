@@ -89,9 +89,9 @@ class LeaseController extends Controller
         $lease->version = 1;
 
         // Check if there are previous leases for the same tenant to set the correct previous_record_id and previous_hash
-        $lastLeaseForTenant = Lease::where('tenant_id', $request->tenant_id)->orderBy('id', 'desc')->first();
+        $lastLeaseForTenant = Lease::where('tenant_id', $request->tenant_id)->orderBy('lease_id', 'desc')->first();
         if ($lastLeaseForTenant) {
-            $lease->previous_record_id = $lastLeaseForTenant->id;
+            $lease->previous_record_id = $lastLeaseForTenant->lease_id;
             $lease->previous_hash = $lastLeaseForTenant->current_hash;
         } else {
             $lease->previous_record_id = 0;
@@ -99,18 +99,37 @@ class LeaseController extends Controller
         }
 
         $lease->save();
-        Log::info('New lease saved with ID: ' . $lease->id);
+        Log::info('New lease saved with ID: ' . $lease->lease_id);
+
+        // Re-fetch the saved lease to ensure lease_id is set
+        $lease = Lease::findOrFail($lease->lease_id);
 
         // Generate the current hash
-        $lease->current_hash = $this->generateHash($lease);
+        $hash_data = [
+            'lease_id' => $lease->lease_id,
+            'landlord_id' => $lease->landlord_id,
+            'tenant_id' => $lease->tenant_id,
+            'room_number' => $lease->room_number,
+            'start_date' => $lease->start_date,
+            'end_date' => $lease->end_date,
+            'lease_agreement' => $lease->lease_agreement,
+            'status' => $lease->status,
+            'version' => $lease->version,
+            'previous_record_id' => $lease->previous_record_id,
+            'previous_hash' => $lease->previous_hash,
+            'created_at' => $lease->created_at,
+            'updated_at' => $lease->updated_at
+        ];
 
-        // Log the hash data for debugging
+        Log::info('Data used for computing hash: ', $hash_data);
+
+        $lease->current_hash = hash('sha256', implode('', $hash_data));
+
         Log::info('Generated current hash for lease: ' . $lease->current_hash);
 
-        // Save the lease again to store the current hash
-        $lease->save();
+        // Save again to update the current_hash
+        Lease::where('lease_id', $lease->lease_id)->update(['current_hash' => $lease->current_hash, 'updated_at' => now()]);
 
-        // Check if the current_hash was saved correctly
         Log::info('Lease current hash after saving: ' . $lease->current_hash);
 
         return redirect()->route('leases.create')->with('success', 'Lease created successfully.');
@@ -123,32 +142,31 @@ class LeaseController extends Controller
         if ($landlord) {
             Log::info('Fetching leases for landlord ID: ' . $landlord->landlord_id);
 
-            // Subquery to get the latest version for each landlord, tenant, and room combination
-            $latestLeases = Lease::select('landlord_id', 'tenant_id', 'room_number', DB::raw('MAX(version) as latest_version'))
+            $latestRecords = Lease::select('landlord_id', 'tenant_id', 'room_number', DB::raw('MAX(created_at) as latest_created_at'))
                 ->where('landlord_id', $landlord->landlord_id)
+                ->groupBy('landlord_id', 'tenant_id', 'room_number')
+                ->get();
+
+            $leases = Lease::with('tenant') // Eager load tenant information
+                ->where(function ($query) use ($latestRecords) {
+                    foreach ($latestRecords as $record) {
+                        $query->orWhere(function ($subQuery) use ($record) {
+                            $subQuery->where('landlord_id', $record->landlord_id)
+                                ->where('tenant_id', $record->tenant_id)
+                                ->where('room_number', $record->room_number)
+                                ->where('created_at', $record->latest_created_at);
+                        });
+                    }
+                })
                 ->where('status', '!=', 'DELETE')
-                ->groupBy('landlord_id', 'tenant_id', 'room_number');
+                ->orderBy('tenant_id', 'desc')
+                ->paginate(10);
 
-            // Main query to get the lease details based on the latest version subquery
-            $leases = Lease::joinSub($latestLeases, 'latestLeases', function ($join) {
-                $join->on('leases.landlord_id', '=', 'latestLeases.landlord_id')
-                    ->on('leases.tenant_id', '=', 'latestLeases.tenant_id')
-                    ->on('leases.room_number', '=', 'latestLeases.room_number')
-                    ->on('leases.version', '=', 'latestLeases.latest_version');
-            })
-                ->with('tenant')
-                ->where('leases.status', '!=', 'DELETE')
-                ->orderBy('leases.tenant_id', 'asc')
-                ->get(['leases.*']);
-
-            // Log the number of leases fetched
             Log::info('Number of leases fetched: ' . $leases->count());
 
-            // If no leases found, log a message
             if ($leases->isEmpty()) {
                 Log::info('No leases found for landlord ID: ' . $landlord->landlord_id);
             } else {
-                // Log the fetched leases
                 Log::info('Fetched leases: ', $leases->toArray());
             }
 
@@ -160,23 +178,18 @@ class LeaseController extends Controller
     }
 
 
-
-
-
-
-
-
-
-
-    public function edit(Lease $lease)
+    public function edit($id)
     {
         $landlord = Auth::guard('landlord')->user();
+        $lease = Lease::with('tenant')->where('lease_id', $id)->firstOrFail();
         return view('landlord.edit-lease', compact('lease', 'landlord'));
     }
 
-    public function update(Request $request, Lease $lease)
+
+    public function update(Request $request, $id)
     {
-        Log::info('Updating lease with ID: ' . $lease->id);
+        $lease = Lease::where('lease_id', $id)->firstOrFail();
+        Log::info('Updating lease with ID: ' . $lease->lease_id);
 
         $request->validate([
             'room_number' => 'required|integer',
@@ -185,7 +198,6 @@ class LeaseController extends Controller
             'lease_agreement' => 'nullable|file|mimes:pdf|max:2048',
         ]);
 
-        // Manual unique check for room number with the same landlord and tenant
         $updatedData = [
             'landlord_id' => $lease->landlord_id,
             'tenant_id' => $lease->tenant_id,
@@ -195,7 +207,7 @@ class LeaseController extends Controller
             'lease_agreement' => $lease->lease_agreement,
             'status' => 'UPDATE',
             'version' => $lease->version + 1,
-            'previous_record_id' => $lease->id,
+            'previous_record_id' => $lease->lease_id,
             'previous_hash' => $lease->current_hash,
         ];
 
@@ -221,10 +233,29 @@ class LeaseController extends Controller
 
         $newLease->save();
 
-        $newLease->current_hash = $this->generateHash($newLease);
-        $newLease->save();
+        $hash_data = [
+            'lease_id' => $newLease->lease_id,
+            'landlord_id' => $newLease->landlord_id,
+            'tenant_id' => $newLease->tenant_id,
+            'room_number' => $newLease->room_number,
+            'start_date' => $newLease->start_date,
+            'end_date' => $newLease->end_date,
+            'lease_agreement' => $newLease->lease_agreement,
+            'status' => $newLease->status,
+            'version' => $newLease->version,
+            'previous_record_id' => $newLease->previous_record_id,
+            'previous_hash' => $newLease->previous_hash,
+            'created_at' => $newLease->created_at,
+            'updated_at' => $newLease->updated_at
+        ];
 
-        Log::info('Lease updated successfully with new ID: ' . $newLease->id);
+        Log::info('Data used for computing hash: ', $hash_data);
+
+        $newLease->current_hash = hash('sha256', implode('', $hash_data));
+
+        Lease::where('lease_id', $newLease->lease_id)->update(['current_hash' => $newLease->current_hash]);
+
+        Log::info('Lease updated successfully with new ID: ' . $newLease->lease_id);
         Log::info('Data being stored: ', $newLease->toArray());
 
         return redirect()->route('leases.index')->with('success', 'Lease updated successfully.');
@@ -234,24 +265,41 @@ class LeaseController extends Controller
     {
         Log::info('Soft deleting lease with ID: ' . $id);
 
-        $currentLease = Lease::where('id', $id)->latest('version')->firstOrFail();
+        $currentLease = Lease::where('lease_id', $id)->latest('version')->firstOrFail();
 
-        $newLease = $currentLease->replicate();
+        $newLease = $currentLease->replicate(['lease_id']);
         $newLease->version = $currentLease->version + 1;
         $newLease->status = 'DELETE';
-        $newLease->previous_record_id = $currentLease->id;
+        $newLease->previous_record_id = $currentLease->lease_id;
         $newLease->previous_hash = $currentLease->current_hash;
 
         $newLease->save();
 
-        // Generate the current hash after saving to get the id
-        $newLease->current_hash = $this->generateHash($newLease);
+        Log::info('New Soft Deleted Lease ID: ' . $newLease->lease_id);
 
-        // Log the current hash
+        $hash_data = [
+            'lease_id' => $newLease->lease_id,
+            'landlord_id' => $newLease->landlord_id,
+            'tenant_id' => $newLease->tenant_id,
+            'room_number' => $newLease->room_number,
+            'start_date' => $newLease->start_date,
+            'end_date' => $newLease->end_date,
+            'lease_agreement' => $newLease->lease_agreement,
+            'status' => $newLease->status,
+            'version' => $newLease->version,
+            'previous_record_id' => $newLease->previous_record_id,
+            'previous_hash' => $newLease->previous_hash,
+            'created_at' => $newLease->created_at,
+            'updated_at' => $newLease->updated_at
+        ];
+
+        Log::info('Data used for computing hash: ', $hash_data);
+
+        $newLease->current_hash = hash('sha256', implode('', $hash_data));
+
         Log::info('Current Hash for Soft Deleted Lease: ' . $newLease->current_hash);
 
-        // Save again to update the current_hash
-        $newLease->save();
+        Lease::where('lease_id', $newLease->lease_id)->update(['current_hash' => $newLease->current_hash, 'updated_at' => now()]);
 
         return redirect()->route('leases.index')->with('success', 'Lease has been successfully deleted.');
     }
@@ -260,22 +308,54 @@ class LeaseController extends Controller
     public function showTenantLeases()
     {
         $tenant = Auth::guard('tenants')->user();
-        $leases = Lease::where('tenant_id', $tenant->tenant_id)->get();
-        return view('tenant.show-leases', compact('leases', 'tenant'));
+        if ($tenant) {
+            Log::info('Fetching leases for tenant ID: ' . $tenant->tenant_id);
+
+            $latestRecords = Lease::select('landlord_id', 'tenant_id', 'room_number', DB::raw('MAX(created_at) as latest_created_at'))
+                ->where('tenant_id', $tenant->tenant_id)
+                ->groupBy('landlord_id', 'tenant_id', 'room_number')
+                ->get();
+
+            $leases = Lease::where(function ($query) use ($latestRecords) {
+                foreach ($latestRecords as $record) {
+                    $query->orWhere(function ($subQuery) use ($record) {
+                        $subQuery->where('landlord_id', $record->landlord_id)
+                            ->where('tenant_id', $record->tenant_id)
+                            ->where('room_number', $record->room_number)
+                            ->where('created_at', $record->latest_created_at);
+                    });
+                }
+            })
+                ->where('status', '!=', 'DELETE')
+                ->orderBy('tenant_id', 'desc')
+                ->paginate(10);
+
+            Log::info('Number of leases fetched: ' . $leases->count());
+
+            if ($leases->isEmpty()) {
+                Log::info('No leases found for tenant ID: ' . $tenant->tenant_id);
+            } else {
+                Log::info('Fetched leases: ', $leases->toArray());
+            }
+
+            return view('tenant.show-leases', compact('leases', 'tenant'));
+        } else {
+            Log::error('Tenant not found or not logged in');
+            return redirect()->back()->withErrors(['message' => 'Tenant not found']);
+        }
     }
+
 
     public function index2()
     {
         $valid = true;
 
-        // Fetch all leases including soft-deleted ones
-        $leases = Lease::withTrashed()
-            ->orderBy('id', 'asc')
-            ->get();
+        // Fetch all leases including soft-deleted ones with their related landlord and tenant
+        $leases = Lease::with(['landlord', 'tenant'])->withTrashed()->orderBy('lease_id', 'asc')->get();
 
         foreach ($leases as $lease) {
             $hash_data = [
-                'id' => $lease->id,
+                'lease_id' => $lease->lease_id,
                 'landlord_id' => $lease->landlord_id,
                 'tenant_id' => $lease->tenant_id,
                 'room_number' => $lease->room_number,
@@ -292,13 +372,12 @@ class LeaseController extends Controller
 
             $computed_hash = hash('sha256', implode('', $hash_data));
 
-            // Detailed logging for hash computation
             Log::info('Hash calculation details for lease ', $hash_data);
             Log::info('Computed Hash: ' . $computed_hash);
 
             if ($computed_hash !== $lease->current_hash) {
                 Log::error('Hash mismatch', [
-                    'id' => $lease->id,
+                    'lease_id' => $lease->lease_id,
                     'computed_hash' => $computed_hash,
                     'current_hash' => $lease->current_hash,
                 ]);
@@ -306,18 +385,17 @@ class LeaseController extends Controller
                 break;
             }
 
-            // Skip the linked records check for the initial record
             if ($lease->previous_record_id == 0 && $lease->previous_hash == '0') {
                 continue;
             }
 
-            $linked_records_count = Lease::where('id', $lease->previous_record_id)
+            $linked_records_count = Lease::where('lease_id', $lease->previous_record_id)
                 ->where('current_hash', $lease->previous_hash)
                 ->count();
 
             if ($linked_records_count === 0) {
                 Log::error('Invalid linked records count', [
-                    'id' => $lease->id,
+                    'lease_id' => $lease->lease_id,
                     'previous_record_id' => $lease->previous_record_id,
                     'previous_hash' => $lease->previous_hash,
                     'linked_records_count' => $linked_records_count,
@@ -330,26 +408,4 @@ class LeaseController extends Controller
         return view('all-lease-table', compact('leases', 'valid'));
     }
 
-    private function generateHash($lease)
-    {
-        $hash_data = [
-            'id' => $lease->id,
-            'landlord_id' => $lease->landlord_id,
-            'tenant_id' => $lease->tenant_id,
-            'room_number' => $lease->room_number,
-            'start_date' => $lease->start_date,
-            'end_date' => $lease->end_date,
-            'lease_agreement' => $lease->lease_agreement,
-            'status' => $lease->status,
-            'version' => $lease->version,
-            'previous_record_id' => $lease->previous_record_id,
-            'previous_hash' => $lease->previous_hash,
-            'created_at' => $lease->created_at,
-            'updated_at' => $lease->updated_at
-        ];
-
-        Log::info('Data used for computing hash: ', $hash_data);
-
-        return hash('sha256', implode('', $hash_data));
-    }
 }

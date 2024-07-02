@@ -24,15 +24,15 @@
                 @endif
 
                 <!-- Edit Lease Form -->
-                <form id="editLeaseForm" method="POST" action="{{ route('leases.update', $lease) }}"
+                <form id="editLeaseForm" method="POST" action="{{ route('leases.update', $lease->lease_id) }}"
                     enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label for="tenantId" class="fw-bold text-dark">Tenant</label>
-                            <input type="text" id="tenantId" class="form-control" value="{{ $lease->tenant_id}}"
-                                readonly>
+                            <label for="tenantName" class="fw-bold text-dark">Tenant</label>
+                            <input type="text" id="tenantName" class="form-control"
+                                value="{{ $lease->tenant->tenant_name }}" readonly>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="roomNumber" class="fw-bold text-dark">Room Number</label>
@@ -97,8 +97,4 @@
         </div>
     </div>
 
-
-
-
 </main>
-@endsection
